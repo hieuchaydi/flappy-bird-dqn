@@ -1,0 +1,105 @@
+import pygame
+import random
+import numpy as np
+
+# Cài đặt các thông số của game
+SCREEN_WIDTH = 600
+SCREEN_HEIGHT = 400
+BIRD_WIDTH = 40
+BIRD_HEIGHT = 40
+PIPE_WIDTH = 60
+PIPE_GAP = 150
+GRAVITY = 0.5
+BIRD_JUMP = -10
+
+# Màu sắc
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+GREEN = (0, 255, 0)
+
+class Bird:
+    def __init__(self):
+        self.x = 50
+        self.y = SCREEN_HEIGHT // 2
+        self.velocity = 0
+
+    def jump(self):
+        self.velocity = BIRD_JUMP
+
+    def update(self):
+        self.velocity += GRAVITY
+        self.y += self.velocity
+
+    def get_state(self, pipes):
+        if len(pipes) > 0:
+            pipe = pipes[0]  # Lấy ống đầu tiên
+            return np.array([self.y, self.velocity, pipe.x, pipe.height])  # Trả về 4 giá trị
+        else:
+            return np.array([self.y, self.velocity, SCREEN_WIDTH, SCREEN_HEIGHT])  # Nếu không có ống
+
+class Pipe:
+    def __init__(self):
+        self.x = SCREEN_WIDTH
+        self.height = random.randint(100, SCREEN_HEIGHT - PIPE_GAP)
+        self.top = self.height - SCREEN_HEIGHT
+        self.bottom = self.height + PIPE_GAP
+
+    def move(self):
+        self.x -= 5
+
+    def off_screen(self):
+        return self.x < -PIPE_WIDTH
+
+class FlappyBirdGame:
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+        self.clock = pygame.time.Clock()
+        self.bird = Bird()
+        self.pipes = []
+        self.score = 0
+        self.done = False
+
+    def reset(self):
+        self.bird = Bird()
+        self.pipes = [Pipe()]
+        self.score = 0
+        self.done = False
+        return self.bird.get_state(self.pipes)
+
+    def step(self, action):
+        if action == 1:  # Jump
+            self.bird.jump()
+        
+        self.bird.update()
+
+        # Di chuyển ống
+        for pipe in self.pipes:
+            pipe.move()
+        if self.pipes[0].off_screen():
+            self.pipes.pop(0)
+            self.pipes.append(Pipe())
+            self.score += 1
+
+        # Kiểm tra va chạm
+        if self.bird.y < 0 or self.bird.y > SCREEN_HEIGHT:
+            self.done = True
+        for pipe in self.pipes:
+            if self.bird.x + BIRD_WIDTH > pipe.x and self.bird.x < pipe.x + PIPE_WIDTH:
+                if self.bird.y < pipe.height or self.bird.y + BIRD_HEIGHT > pipe.bottom:
+                    self.done = True
+
+        next_state = self.bird.get_state(self.pipes)
+        reward = 1 if not self.done else -1
+        return next_state, reward, self.done
+
+    def render(self):
+        self.screen.fill(WHITE)
+        pygame.draw.rect(self.screen, BLACK, (self.bird.x, self.bird.y, BIRD_WIDTH, BIRD_HEIGHT))
+        for pipe in self.pipes:
+            pygame.draw.rect(self.screen, GREEN, (pipe.x, 0, PIPE_WIDTH, pipe.height))
+            pygame.draw.rect(self.screen, GREEN, (pipe.x, pipe.bottom, PIPE_WIDTH, SCREEN_HEIGHT - pipe.bottom))
+        pygame.display.update()
+
+    def get_score(self):
+        return self.score

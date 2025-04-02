@@ -1,0 +1,46 @@
+import torch
+import numpy as np
+import random
+from flappy_bird import FlappyBirdEnv
+from dqn_model import DQN
+
+env = FlappyBirdEnv()
+model = DQN(3, 2)  
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+loss_fn = torch.nn.MSELoss()
+
+epsilon = 1.0
+gamma = 0.99  
+
+for episode in range(1000):
+    state = env.reset()
+    total_reward = 0
+
+    for _ in range(1000):
+        if random.random() < epsilon:
+            action = random.randint(0, 1)
+        else:
+            with torch.no_grad():
+                action = torch.argmax(model(torch.tensor(state, dtype=torch.float32))).item()
+
+        next_state, reward, done = env.step(action)
+        total_reward += reward
+
+        target = reward + gamma * torch.max(model(torch.tensor(next_state, dtype=torch.float32)))
+        output = model(torch.tensor(state, dtype=torch.float32))[action]
+        loss = loss_fn(output, target)
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        state = next_state
+
+        if done:
+            break
+
+    epsilon = max(0.1, epsilon * 0.99)
+    print(f"Episode {episode}: Score {env.score}, Epsilon {epsilon}")
+    torch.save(model.state_dict(), "flappy_bird_dqn.pth")
+print("Model saved successfully!")
+
