@@ -6,11 +6,22 @@ This project is a simple implementation of the **Flappy Bird game** using **Deep
 
 The project is organized as follows:
 
-flappy-bird-pygame/ │ ├── dqn_model.py # Defines the DQN model used for Q-learning ├── flappy_bird.py # Defines the game environment ├── train.py # Main script to train the model using reinforcement learning ├── requirements.txt # List of Python dependencies ├── flappy_bird_dqn.pth # Saved model after training (if available) ├── README.md # This file
-
-bash
-Sao chép
-Chỉnh sửa
+FlappyBirdAI/
+│
+├── assets/                 # Chứa hình ảnh và âm thanh
+│   ├── bg.png
+│   ├── birdup.png
+│   ├── birddown.png
+│   ├── ground.png
+│   ├── pipeup.png
+│   ├── pipedown.png
+│   ├── font.ttf
+│
+├── flappy_bird.py          # Game Flappy Bird gốc
+├── ai_flappy_bird.py       # AI điều khiển game
+├── dqn_model.py            # Mô hình AI dùng Deep Q-Learning
+├── train.py                # Script huấn luyện AI
+├── requirements.txt        # Danh sách thư viện
 
 ## Installation
 
